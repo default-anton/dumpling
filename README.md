@@ -54,12 +54,13 @@ Dumpling.get(:logger) # => #<Logger:0x00000000e281a0>
 ```ruby
 container = Dumpling::Container.new
 container.configure do
-  set :adapter do |s|
-    s.class PostgreSQLAdapter
-  end
-
   set :logger do |s|
-    s.instance Logger.new(STDOUT)
+    s.instance Logger.new(STDOUT) # => #<Logger:0x00000000e281a0>
+  end
+  
+  set :adapter do |s|
+    s.instance PostgreSQLAdapter.new
+    s.dependency :logger
   end
 
   set :users_repository do |s|
@@ -70,11 +71,16 @@ container.configure do
 end
 
 class UsersRepository
-  attr_writer :logger, :adapter
+  attr_accessor :logger, :adapter
 
   # You can mark a setter method as a private if you need
-  private :adapter=
+  private :adapter=, :logger=
 end
+
+container.get(:users_repository).logger # => #<Logger:0x00000000e281a0>
+container.get(:users_repository).adapter.logger # => #<Logger:0x00000000e281a0>
+# Logger will be injected every time an adapter is accessed
+container.get(:adapter).logger # => #<Logger:0x00000000e281a0>
 ```
 
 ## Development
