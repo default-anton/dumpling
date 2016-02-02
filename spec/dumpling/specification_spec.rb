@@ -30,47 +30,41 @@ describe Dumpling::Specification do
     end
   end
 
-  describe '#inject' do
+  describe '#dependency' do
     subject { specification.dependencies }
 
     context 'there is no dependencies' do
       it { is_expected.to be_empty }
     end
 
-    context 'when id of the dependency is a symbol' do
-      before { specification.inject(:users_repository) }
+    context 'when using a single-worded id' do
+      before { specification.dependency(:users_repository) }
 
-      it { is_expected.to eq [{ id: :users_repository, attr: :users_repository }] }
-    end
-
-    context 'when id of the dependency is a string' do
-      before { specification.inject('users_repository') }
-
-      it { is_expected.to eq [{ id: :users_repository, attr: :users_repository }] }
+      it { is_expected.to eq [{ id: :users_repository, attribute: :users_repository }] }
     end
 
     context 'when using a composite id' do
       describe 'good delimiters' do
         before do
-          specification.inject(:'repo.ads')
-          specification.inject(:'repo:users')
-          specification.inject(:'repo legs')
+          specification.dependency(:'repo.ads')
+          specification.dependency(:'repo:users')
+          specification.dependency(:'repo legs')
         end
 
         it 'guesses the name of the attribute by the last word of the id' do
           expect(subject).to eq [
-                                  { id: :'repo.ads', attr: :ads },
-                                  { id: :'repo:users', attr: :users },
-                                  { id: :'repo legs', attr: :legs }
-                                ]
+            { id: :'repo.ads', attribute: :ads },
+            { id: :'repo:users', attribute: :users },
+            { id: :'repo legs', attribute: :legs }
+          ]
         end
       end
 
       describe 'bad delimiters' do
-        before { specification.inject(:'repo_ads') }
+        before { specification.dependency(:repo_ads) }
 
         it 'does not guess the name by the last word if an underscore is a delimiter' do
-          expect(subject).to eq [{ id: :'repo_ads', attr: :repo_ads }]
+          expect(subject).to eq [{ id: :repo_ads, attribute: :repo_ads }]
         end
       end
     end

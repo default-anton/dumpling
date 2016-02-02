@@ -14,15 +14,15 @@ module Dumpling
       instance.nil? ? @instance : (@instance = instance)
     end
 
-    def inject(id, attr: nil)
-      dependencies << { id: id.to_sym, attr: (attr || guess_attribute(id)).to_sym }
+    def dependency(id, attribute: nil)
+      dependencies << { id: id, attribute: (attribute || guess_attribute(id)).to_sym }
     end
 
     private
 
     def guess_attribute(id)
-      /(?<attr>\w+)\z/i =~ id
-      attr || id
+      /(?<attribute>\w+)\z/i =~ id
+      attribute || id
     end
   end
 end

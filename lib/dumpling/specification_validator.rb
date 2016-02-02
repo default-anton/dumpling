@@ -13,8 +13,13 @@ module Dumpling
     private
 
     def validate_value
+      unless @specification.class.nil? || @specification.instance.nil?
+        fail Errors::Specification::Invalid,
+             'Do not define both #class and #instance at the same time'
+      end
+
       if @specification.class.nil? && @specification.instance.nil?
-        fail Errors::Specification::Invalid, 'You must define #class or #instance'
+        fail Errors::Specification::Invalid, 'Define #class or #instance'
       end
     end
 
@@ -29,8 +34,8 @@ module Dumpling
     def missing_dependencies
       @specification
         .dependencies
-        .reject { |e| @id_list.include?(e[:id]) }
         .map { |e| e[:id] }
+        .reject { |e| @id_list.include?(e) }
     end
   end
 end

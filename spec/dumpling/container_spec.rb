@@ -1,205 +1,224 @@
 require 'spec_helper'
 
 describe Dumpling::Container do
-  let(:instance) { described_class.new }
-  let(:chickens_repository) { Class.new }
-  let(:dogs_repository) { Class.new }
-  let(:eat_chickens) do
-    Class.new { attr_accessor :chickens_repository, :dogs_repository }
-  end
+  let(:container) { described_class.new }
 
   describe '#set' do
-    describe 'validation' do
-      let(:error) { Dumpling::Errors::Specification::Invalid }
+    context 'when the specification is valid' do
+      let(:repository_class) { Class.new }
+      let!(:definition) do
+        repository_class = self.repository_class
 
-      describe 'valid items' do
-        subject do
-          proc do
-            instance.set :bart do |c|
-              c.class String
-            end
-
-            instance.set :simpson do |c|
-              c.instance 'Simpson'
-            end
-
-            instance.set :item do |c|
-              c.class String
-              c.inject 'bart'
-            end
-          end
-        end
-
-        it { is_expected.not_to raise_error }
-      end
-
-      context 'when both the class and instance attributes are not defined' do
-        subject do
-          -> { instance.set(:item) {} }
-        end
-
-        it { is_expected.to raise_error error, 'You must define #class or #instance' }
-      end
-
-      context 'when specified dependencies do not exist' do
-        let(:error) { Dumpling::Errors::Specification::MissingDependencies }
-
-        subject do
-          proc do
-            instance.set :item do |c|
-              c.class String
-              c.inject 'bart'
-              c.inject 'simpson'
-            end
-          end
-        end
-
-        context 'when all dependencies are not defined' do
-          it { is_expected.to raise_error error, 'bart, simpson' }
-        end
-
-        context 'when just one dependency is not defined' do
-          before do
-            instance.set(:bart) { |c| c.class String }
-          end
-
-          it { is_expected.to raise_error error, 'simpson' }
+        container.set :repository do |s|
+          s.class repository_class
         end
       end
 
-      context 'when trying to define an item twice' do
-        let(:error) { Dumpling::Errors::Container::Duplicate }
+      subject { definition }
 
-        subject do
-          proc do
-            instance.set :simpson do |c|
-              c.instance 'Simpson'
-            end
+      it { is_expected.to eq :repository }
 
-            instance.set :simpson do |c|
-              c.instance 'Simpson'
-            end
-          end
+      describe '#get' do
+        subject { container.get(:repository) }
+
+        it { is_expected.to be_an_instance_of repository_class }
+      end
+    end
+
+    context 'when the specification is invalid' do
+      subject do
+        container.set :repository do
         end
-
-        it { is_expected.to raise_error error, 'simpson' }
       end
 
-      context 'when registering an instance of an object' do
-        let(:command) { Class.new }
-        let(:command_instance) { command.new }
+      it 'does not set the invalid id' do
+        expect { subject }.to raise_error Dumpling::Errors::Specification::Invalid
+        expect { container.get(:repository) }.to raise_error Dumpling::Errors::Container::Missing
+      end
+    end
 
-        before do
-          instance.set :do do |c|
-            c.instance command_instance
-          end
+    context 'when the id is duplicated' do
+      let(:repository_class) { Class.new }
+      let(:duplicated_repository_class) { Class.new }
+
+      before do
+        repository_class = self.repository_class
+
+        container.set :repository do |s|
+          s.class repository_class
         end
+      end
 
-        subject { instance[:do] }
+      subject do
+        duplicated = duplicated_repository_class
 
-        it 'does not instantiate an object' do
-          expect(subject).to eq command_instance
+        container.set :repository do |s|
+          s.class duplicated
         end
+      end
+
+      it 'does not overwrite the id' do
+        expect { subject }.to raise_error Dumpling::Errors::Container::Duplicate
+        expect(container.get(:repository)).to be_an_instance_of repository_class
       end
     end
   end
 
   describe '#get' do
-    context 'when an item does not exist' do
-      let(:error) { Dumpling::Errors::Container::Missing }
-
-      subject { -> { instance[:unnamed] } }
-
-      it { is_expected.to raise_error error, 'unnamed' }
-    end
-
-    describe 'an item without dependencies' do
-      let!(:configuration) do
-        chickens_repository = self.chickens_repository
-
-        instance.configure do
-          set :'adapters.chickens_repository' do |c|
-            c.class chickens_repository
-          end
-        end
-      end
-
-      subject { instance[:'adapters.chickens_repository'] }
-
-      it { is_expected.to be_an_instance_of chickens_repository }
-    end
-
-    describe 'an item with dependencies' do
-      let(:chickens_repository_instance) { chickens_repository.new }
+    context 'when the id exists' do
+      let(:repository_class) { Class.new }
 
       before do
-        chickens_repository_instance = self.chickens_repository_instance
-        dogs_repository = self.dogs_repository
-        eat_chickens = self.eat_chickens
+        repository_class = self.repository_class
 
-        instance.configure do
-          set :'adapters.chickens_repository' do |c|
-            c.instance chickens_repository_instance
-          end
-
-          set :'adapters.dogs_repository' do |c|
-            c.class dogs_repository
-          end
-
-          set :'commands.eat_chickens' do |c|
-            c.class eat_chickens
-            c.inject 'adapters.chickens_repository'
-            c.inject 'adapters.dogs_repository'
-          end
+        container.set :repository do |s|
+          s.class repository_class
         end
       end
 
-      subject { instance[:'commands.eat_chickens'] }
+      subject { container.get(:repository) }
 
-      it { is_expected.to be_an_instance_of eat_chickens }
-
-      describe 'dependencies' do
-        it { expect(subject.chickens_repository).to eq chickens_repository_instance }
-        it { expect(subject.dogs_repository).to be_an_instance_of dogs_repository }
-      end
+      it { is_expected.to be_an_instance_of repository_class }
     end
 
-    describe 'an item with dependencies which, in turn, have their own dependencies' do
-      let(:dogs_repository) { Class.new { attr_accessor :chickens_repository } }
+    context 'when the id does not exist' do
+      subject { -> { container.get(:repository) } }
 
+      it { is_expected.to raise_error Dumpling::Errors::Container::Missing }
+    end
+
+    context 'when the specification is configured to use an instance' do
       before do
-        chickens_repository = self.chickens_repository
-        dogs_repository = self.dogs_repository
-        eat_chickens = self.eat_chickens
-
-        instance.configure do
-          set :'adapters.chickens_repository' do |c|
-            c.class chickens_repository
-          end
-
-          set :'adapters.dogs_repository' do |c|
-            c.class dogs_repository
-            c.inject 'adapters.chickens_repository'
-          end
-
-          set :'commands.eat_chickens' do |c|
-            c.class eat_chickens
-            c.inject 'adapters.dogs_repository'
-          end
+        container.set :string do |s|
+          s.instance 'instance'
         end
       end
 
-      subject { instance[:'commands.eat_chickens'] }
+      subject { container.get(:string) }
 
-      it { is_expected.to be_an_instance_of eat_chickens }
+      it { is_expected.to eq 'instance' }
+    end
 
-      describe 'dependencies' do
-        it { expect(subject.dogs_repository).to be_an_instance_of dogs_repository }
+    context 'when the id has dependencies' do
+      describe 'multiple dependencies' do
+        let(:repository_instance) do
+          klass = Class.new { attr_accessor :first_string, :second_string }
+          klass.new
+        end
 
-        describe 'nested dependency' do
-          subject { instance[:'commands.eat_chickens'].dogs_repository }
+        before do
+          repository_instance = self.repository_instance
 
-          it { expect(subject.chickens_repository).to be_an_instance_of chickens_repository }
+          container.configure do
+            set :first_string do |s|
+              s.instance 'string1'
+            end
+
+            set :second_string do |s|
+              s.instance 'string2'
+            end
+
+            set :repository do |s|
+              s.instance repository_instance
+              s.dependency :first_string
+              s.dependency :second_string
+            end
+          end
+        end
+
+        subject { container.get(:repository) }
+
+        it { is_expected.to eq repository_instance }
+
+        describe 'dependencies' do
+          subject { [super().first_string, super().second_string] }
+
+          it { is_expected.to eq %w(string1 string2) }
+        end
+      end
+
+      describe 'nested dependencies' do
+        let(:logger_class) { Class.new }
+        let(:adapter_instance) do
+          klass = Class.new { attr_accessor :logger }
+          klass.new
+        end
+        let(:repository_instance) do
+          klass = Class.new { attr_accessor :adapter }
+          klass.new
+        end
+
+        before do
+          logger_class = self.logger_class
+          adapter_instance = self.adapter_instance
+          repository_instance = self.repository_instance
+
+          container.configure do
+            set :logger do |s|
+              s.class logger_class
+            end
+
+            set :adapter do |s|
+              s.instance adapter_instance
+              s.dependency :logger
+            end
+
+            set :repository do |s|
+              s.instance repository_instance
+              s.dependency :adapter
+            end
+          end
+        end
+
+        subject { container.get(:repository) }
+
+        it { is_expected.to eq repository_instance }
+
+        describe 'top tier dependency' do
+          subject { super().adapter }
+
+          it { is_expected.to eq adapter_instance }
+        end
+
+        describe 'the lower tier dependency' do
+          subject { super().adapter.logger }
+
+          it { is_expected.to be_an_instance_of logger_class }
+        end
+      end
+
+      context 'when the dependency is defined by a private attr_accessor' do
+        let(:repository_instance) do
+          klass = Class.new do
+            attr_accessor :symbol
+            private :symbol, :symbol=
+          end
+          klass.new
+        end
+
+        before do
+          repository_instance = self.repository_instance
+
+          container.configure do
+            set :symbol do |s|
+              s.instance :strong_symbol
+            end
+
+            set :repository do |s|
+              s.instance repository_instance
+              s.dependency :symbol
+            end
+          end
+        end
+
+        subject { container.get(:repository) }
+
+        it { is_expected.to eq repository_instance }
+
+        describe 'dependency' do
+          subject { super().send(:symbol) }
+
+          it { is_expected.to eq :strong_symbol }
         end
       end
     end

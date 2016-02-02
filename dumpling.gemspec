@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.homepage = 'https://github.com/antonkuzmenko/dumpling'
   spec.license = 'MIT'
 
-  spec.summary = 'Dumpling is a simple Dependency Injection Container'
+  spec.summary = 'Dumpling is an unobtrusive Dependency Injection Container'
 
   spec.files = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{\Aspec/}) }
   spec.require_paths = ['lib']
@@ -22,4 +22,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake', '~> 10.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rubocop', '~> 0.36.0'
+  spec.add_development_dependency 'simplecov', '~> 0.11'
 end
