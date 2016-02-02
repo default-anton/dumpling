@@ -6,9 +6,6 @@ module Dumpling
 
       class MissingDependencies < Invalid
       end
-
-      class NotClass < Invalid
-      end
     end
   end
 end
