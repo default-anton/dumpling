@@ -20,9 +20,62 @@ Or install it yourself as:
 
     $ gem install dumpling
 
-## Usage
+## Getting started
 
-TODO: Write usage instructions here
+### Simple case
+
+```ruby
+class UsersRepository
+  attr_writer :logger
+end
+
+Dumpling.configure do
+  set :logger do |s|
+    s.instance Logger.new(STDOUT) # => #<Logger:0x00000000e281a0>
+  end
+
+  set :users_repository do |s|
+    s.class UsersRepository
+    s.dependency :logger
+  end
+end
+
+# Every time you invoke the #get method you will get a new instance of the #class
+Dumpling.get(:users_repository) # => #<UsersRepository:0x00000000ebee20>
+Dumpling.get(:users_repository) # => #<UsersRepository:0x00000000e8a8f0>
+
+# Every time you invoke the #get method you will get the same predefined #instance
+Dumpling.get(:logger) # => #<Logger:0x00000000e281a0>
+Dumpling.get(:logger) # => #<Logger:0x00000000e281a0>
+```
+
+### Defining multiple dependencies
+
+```ruby
+container = Dumpling::Container.new
+container.configure do
+  set :adapter do |s|
+    s.class PostgreSQLAdapter
+  end
+
+  set :logger do |s|
+    s.instance Logger.new(STDOUT)
+  end
+
+  set :users_repository do |s|
+    s.class UsersRepository
+    s.dependency :logger
+    s.dependency :adapter
+  end
+end
+
+class UsersRepository
+  attr_writer :logger, :adapter
+
+  # You can mark a setter method as a private if you need
+  private :adapter=
+end
+```
 
 ## Development
 
