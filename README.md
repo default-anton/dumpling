@@ -1,6 +1,8 @@
 # Dumpling
 
-TODO: Describe your gem
+Dumpling provides you an unobtrusive way to manage dependencies.
+What is unobtrusive? Unobtrusive means that you don't need to include a module or inherit a class anywhere in your project.
+Dumpling does not tie your hands. All you have to do is just wire up dependencies.
 
 ## Installation
 
