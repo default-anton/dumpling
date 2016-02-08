@@ -108,13 +108,13 @@ container.configure do
   
   set :'billing.commands.create' do |s|
     s.class Billing::Commands::Create
-    # Will automatically guess the name of the attr_writer by the last word (attr_writer :users=)
+    # Will automatically guess the name of the attr_writer by the last word (attr_writer :users)
     s.dependency :'billing.repositories.users'
   end
   
   set :'billing.commands.open_dispute' do |s|
     s.class Billing::Commands::OpenDispute
-    # Define the attr_writer explicitly (attr_writer :customers=)
+    # Define the attr_writer explicitly (attr_writer :customers)
     s.dependency :'billing.repositories.users', attribute: :customers
   end
 end
