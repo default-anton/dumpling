@@ -22,7 +22,7 @@ Or install it yourself as:
 
 ## Getting started
 
-### Simple case
+### Basics
 
 ```ruby
 class UsersRepository
@@ -78,9 +78,46 @@ class UsersRepository
 end
 
 container.get(:users_repository).logger # => #<Logger:0x00000000e281a0>
-container.get(:users_repository).adapter.logger # => #<Logger:0x00000000e281a0>
+container[:users_repository].adapter.logger # => #<Logger:0x00000000e281a0>
 # Logger will be injected every time an adapter is accessed
-container.get(:adapter).logger # => #<Logger:0x00000000e281a0>
+container[:adapter].logger # => #<Logger:0x00000000e281a0>
+```
+
+### Using namespaces
+
+```ruby
+container = Dumpling::Container.new
+container.configure do
+  # All that does not match [a-zA-Z0-9_] is a delimiter
+  set :'billing:repositories:users' do |s|
+    ...
+  end
+  
+  set :'billing repositories users' do |s|
+    ...
+  end
+  
+  set :'billing.repositories.users' do |s|
+    ...
+  end
+  
+  # Delimiters can be mixed up
+  set :'billing repositories-users' do |s|
+    ...
+  end
+  
+  set :'billing.commands.create' do |s|
+    s.class Billing::Commands::Create
+    # Will automatically guess the name of the attr_writer by the last word (attr_writer :users=)
+    s.dependency :'billing.repositories.users'
+  end
+  
+  set :'billing.commands.open_dispute' do |s|
+    s.class Billing::Commands::OpenDispute
+    # Define the attr_writer explicitly (attr_writer :customers=)
+    s.dependency :'billing.repositories.users', attribute: :customers
+  end
+end
 ```
 
 ## Development
