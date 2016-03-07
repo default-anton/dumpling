@@ -4,9 +4,9 @@ describe Dumpling::Container do
   let(:container) { described_class.new }
 
   describe '#set' do
-    context 'when the specification is valid' do
+    context 'when service is valid' do
       let(:repository_class) { Class.new }
-      let!(:definition) do
+      let!(:declaration) do
         repository_class = self.repository_class
 
         container.set :repository do |s|
@@ -14,7 +14,7 @@ describe Dumpling::Container do
         end
       end
 
-      subject { definition }
+      subject { declaration }
 
       it { is_expected.to eq :repository }
 
@@ -25,19 +25,19 @@ describe Dumpling::Container do
       end
     end
 
-    context 'when the specification is invalid' do
+    context 'when service is invalid' do
       subject do
         container.set :repository do
         end
       end
 
-      it 'does not set the invalid id' do
-        expect { subject }.to raise_error Dumpling::Errors::Specification::Invalid
+      it 'does not define an invalid service' do
+        expect { subject }.to raise_error Dumpling::Errors::Service::Invalid
         expect { container.get(:repository) }.to raise_error Dumpling::Errors::Container::Missing
       end
     end
 
-    context 'when the id is duplicated' do
+    context 'when service is duplicated' do
       let(:repository_class) { Class.new }
       let(:duplicated_repository_class) { Class.new }
 
@@ -57,15 +57,88 @@ describe Dumpling::Container do
         end
       end
 
-      it 'does not overwrite the id' do
+      it 'does not overwrite the service' do
         expect { subject }.to raise_error Dumpling::Errors::Container::Duplicate
         expect(container.get(:repository)).to be_an_instance_of repository_class
       end
     end
   end
 
+  describe '#abstract' do
+    let(:logger_class) { Class.new }
+    let(:repository_class) do
+      Class.new { attr_accessor :logger }
+    end
+    let(:declaration) do
+      logger_class = self.logger_class
+      repository_class = self.repository_class
+
+      container.set :logger do |s|
+        s.class logger_class
+      end
+
+      container.abstract :repository do |s|
+        s.dependency :logger
+      end
+    end
+
+    subject { declaration }
+
+    it { is_expected.to eq :repository }
+
+    context 'when accessing an abstract service via the #get method' do
+      let!(:declaration) { super() }
+
+      subject { -> { container.get(:repository) } }
+
+      it { is_expected.to raise_error Dumpling::Errors::Container::Missing }
+    end
+
+    context 'when service is invalid' do
+      let(:declaration) do
+        repository_class = self.repository_class
+
+        container.abstract :repository do |s|
+          s.dependency :logger
+        end
+      end
+
+      it 'does not define an invalid service' do
+        expect { subject }.to raise_error Dumpling::Errors::Service::MissingDependencies
+      end
+    end
+
+    context 'when the service is duplicated' do
+      let(:logger_class) { Class.new }
+      let(:repository_class) { Class.new { attr_accessor :logger } }
+      let(:declaration) do
+        repository_class = self.repository_class
+
+        container.abstract :repository do |s|
+          s.dependency :logger
+        end
+      end
+
+      before do
+        logger_class = self.logger_class
+
+        container.set :logger do |s|
+          s.class logger_class
+        end
+
+        container.abstract :repository do |s|
+          s.dependency :logger
+        end
+      end
+
+      subject { -> { declaration } }
+
+      it { is_expected.to raise_error Dumpling::Errors::Container::Duplicate }
+    end
+  end
+
   describe '#get' do
-    context 'when the id exists' do
+    context 'when the service exists' do
       let(:repository_class) { Class.new }
 
       before do
@@ -81,13 +154,13 @@ describe Dumpling::Container do
       it { is_expected.to be_an_instance_of repository_class }
     end
 
-    context 'when the id does not exist' do
+    context 'when the service does not exist' do
       subject { -> { container.get(:repository) } }
 
       it { is_expected.to raise_error Dumpling::Errors::Container::Missing }
     end
 
-    context 'when the specification is configured to use an instance' do
+    context 'when service is configured to use an instance' do
       before do
         container.set :string do |s|
           s.instance 'instance'
@@ -99,7 +172,7 @@ describe Dumpling::Container do
       it { is_expected.to eq 'instance' }
     end
 
-    context 'when the id has dependencies' do
+    context 'when the service has dependencies' do
       describe 'multiple dependencies' do
         let(:repository_instance) do
           klass = Class.new { attr_accessor :first_string, :second_string }
@@ -220,6 +293,61 @@ describe Dumpling::Container do
 
           it { is_expected.to eq :strong_symbol }
         end
+      end
+    end
+
+    context 'when the service include abstract services' do
+      let(:logger_instance) { 'Logger.new(STDOUT)' }
+      let(:users_repository_class) do
+        Class.new { attr_accessor :logger }
+      end
+
+      before do
+        logger_instance = self.logger_instance
+        users_repository_class = self.users_repository_class
+
+        container.set :logger do |s|
+          s.instance logger_instance
+        end
+
+        container.abstract :repository do |s|
+          s.dependency :logger
+        end
+
+        container.set :users_repository do |s|
+          s.include :repository
+          s.class users_repository_class
+        end
+      end
+
+      subject { container[:users_repository] }
+
+      it { is_expected.to be_an_instance_of users_repository_class }
+
+      describe 'injection of a dependency from abstract service' do
+        subject { super().logger }
+
+        it { is_expected.to eq logger_instance }
+      end
+
+      context 'when the service overrides abstract service dependency' do
+        let(:posts_repository_class) do
+          Class.new { attr_accessor :my_logger }
+        end
+
+        before do
+          posts_repository_class = self.posts_repository_class
+
+          container.set :posts_repository do |s|
+            s.include :repository
+            s.class posts_repository_class
+            s.dependency :logger, attribute: :my_logger
+          end
+        end
+
+        subject { container[:posts_repository].my_logger }
+
+        it { is_expected.to eq logger_instance }
       end
     end
   end

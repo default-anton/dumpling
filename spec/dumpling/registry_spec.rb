@@ -6,7 +6,7 @@ describe Dumpling::Registry do
   describe '#set' do
     subject { instance.set(:test, 'payload') }
 
-    context 'when defines the id for the first time' do
+    context 'when defines an id for the first time' do
       it { is_expected.to eq 'payload' }
 
       describe '#keys' do
@@ -24,7 +24,7 @@ describe Dumpling::Registry do
       end
     end
 
-    context 'when defines the id multiple times' do
+    context 'when defines an id multiple times' do
       before { instance.set(:test, 'payload') }
 
       it { is_expected.to eq 'payload' }
@@ -48,11 +48,11 @@ describe Dumpling::Registry do
   describe '#get' do
     subject { instance.get(:test) }
 
-    context 'when the id does not exist' do
+    context 'when id does not exist' do
       it { is_expected.to be_nil }
     end
 
-    context 'when the id exists' do
+    context 'when id exists' do
       before { instance.set(:test, 'payload') }
 
       it { is_expected.to eq 'payload' }
@@ -60,13 +60,13 @@ describe Dumpling::Registry do
   end
 
   describe '#has?' do
-    context 'when the id does not exist' do
+    context 'when id does not exist' do
       subject { instance.has?(:test) }
 
       it { is_expected.to be_falsey }
     end
 
-    context 'when the id exists' do
+    context 'when id exists' do
       before { instance.set(:test, 'payload') }
 
       subject { instance.has?(:test) }

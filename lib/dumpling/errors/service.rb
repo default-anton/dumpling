@@ -1,6 +1,6 @@
 module Dumpling
   module Errors
-    module Specification
+    module Service
       class Invalid < BaseError
       end
 
