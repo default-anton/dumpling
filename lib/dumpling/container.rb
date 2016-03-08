@@ -15,7 +15,6 @@ module Dumpling
 
       specification = create_specification(&block)
       @services.set(id, specification)
-
       id
     end
 
@@ -24,16 +23,14 @@ module Dumpling
 
       specification = create_abstract_specification(&block)
       @abstract_services.set(id, specification)
-
       id
     end
 
     def get(id)
       fail(Errors::Container::Missing, id) unless @services.has?(id)
+
       specification = @services.get(id)
-      instance = build_instance(specification)
-      inject_dependencies(instance, specification)
-      instance
+      build_service(specification)
     end
 
     alias :[] get
@@ -63,27 +60,8 @@ module Dumpling
       @dependencies_validator ||= DependenciesValidator.new(@services.keys, @abstract_services.keys)
     end
 
-    def build_instance(specification)
-      specification.class.nil? ? specification.instance : specification.class.new
-    end
-
-    def inject_dependencies(instance, specification)
-      dependencies = find_dependencies(specification)
-      dependencies.each do |id, dependency|
-        instance.send("#{dependency[:attribute]}=", get(id))
-      end
-    end
-
-    def find_dependencies(specification)
-      dependencies = {}
-
-      specification.abstract_services.each do |abstract_service_id|
-        abstract_service = @abstract_services.get(abstract_service_id)
-        dependencies.merge!(find_dependencies(abstract_service))
-      end
-
-      dependencies.merge!(specification.dependencies)
-      dependencies
+    def build_service(specification)
+      ServiceBuilder.new(@services, @abstract_services).build(specification)
     end
   end
 end

@@ -6,6 +6,7 @@ module Dumpling
   require 'dumpling/errors/container'
   require 'dumpling/errors/service'
   require 'dumpling/service_specification'
+  require 'dumpling/service_builder'
   require 'dumpling/class_validator'
   require 'dumpling/dependencies_validator'
   require 'dumpling/registry'

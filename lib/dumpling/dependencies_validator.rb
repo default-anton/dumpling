@@ -1,14 +1,14 @@
 module Dumpling
   class DependenciesValidator
-    def initialize(services, abstract_services)
-      @services = services
-      @abstract_services = abstract_services
+    def initialize(service_ids, abstract_service_ids)
+      @service_ids = service_ids
+      @abstract_service_ids = abstract_service_ids
     end
 
     def validate(specification)
       missing_services = missing_dependencies(specification).map(&:inspect)
-      missing_abstract_services = missing_abstract_dependencies(specification).map do |e|
-        "#{e.inspect}(abstract)"
+      missing_abstract_services = missing_abstract_dependencies(specification).map do |id|
+        "#{id.inspect}(abstract)"
       end
       missing_services.concat(missing_abstract_services)
 
@@ -21,11 +21,11 @@ module Dumpling
 
     def missing_dependencies(specification)
       dependency_ids = specification.dependencies.keys
-      dependency_ids.reject { |e| @services.include?(e) }
+      dependency_ids.reject { |id| @service_ids.include?(id) }
     end
 
     def missing_abstract_dependencies(specification)
-      specification.abstract_services.reject { |e| @abstract_services.include?(e) }
+      specification.abstract_services.reject { |id| @abstract_service_ids.include?(id) }
     end
   end
 end
