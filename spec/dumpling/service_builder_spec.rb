@@ -33,14 +33,14 @@ describe Dumpling::ServiceBuilder do
       end
     end
     let(:first_dependency) do
-      specification = Dumpling::ServiceSpecification.new
-      specification.instance 'string1'
-      specification
+      spec = Dumpling::ServiceSpecification.new
+      spec.instance 'string1'
+      spec
     end
     let(:second_dependency) do
-      specification = Dumpling::ServiceSpecification.new
-      specification.instance 'string2'
-      specification
+      spec = Dumpling::ServiceSpecification.new
+      spec.instance 'string2'
+      spec
     end
 
     before do
@@ -76,143 +76,142 @@ describe Dumpling::ServiceBuilder do
     end
   end
 
-  xdescribe 'nested dependencies' do
+  describe 'nested dependencies' do
     let(:logger_class) { Class.new }
     let(:adapter_instance) do
-      klass = Class.new { attr_accessor :logger }
+      klass = Class.new do
+        private
+        attr_accessor :logger
+      end
       klass.new
     end
-    let(:repository_instance) do
-      klass = Class.new { attr_accessor :adapter }
+    let(:service_instance) do
+      klass = Class.new do
+        private
+        attr_accessor :adapter
+      end
       klass.new
+    end
+    let(:logger_specification) do
+      spec = Dumpling::ServiceSpecification.new
+      spec.class logger_class
+      spec
+    end
+    let(:adapter_specification) do
+      spec = Dumpling::ServiceSpecification.new
+      spec.instance adapter_instance
+      spec.dependency :logger
+      spec
+    end
+    let(:service_specification) do
+      spec = Dumpling::ServiceSpecification.new
+      spec.instance service_instance
+      spec.dependency :adapter
+      spec
     end
 
     before do
-      logger_class = self.logger_class
-      adapter_instance = self.adapter_instance
-      repository_instance = self.repository_instance
-
-      container.configure do
-        set :logger do |s|
-          s.class logger_class
-        end
-
-        set :adapter do |s|
-          s.instance adapter_instance
-          s.dependency :logger
-        end
-
-        set :repository do |s|
-          s.instance repository_instance
-          s.dependency :adapter
-        end
-      end
+      services.set(:logger, logger_specification)
+      services.set(:adapter, adapter_specification)
     end
 
-    subject { container.get(:repository) }
-
-    it { is_expected.to eq repository_instance }
+    it { is_expected.to eq service_instance }
 
     describe 'top tier dependency' do
-      subject { super().adapter }
+      subject { super().send(:adapter) }
 
       it { is_expected.to eq adapter_instance }
     end
 
     describe 'the lower tier dependency' do
-      subject { super().adapter.logger }
+      subject { super().send(:adapter).send(:logger) }
 
       it { is_expected.to be_an_instance_of logger_class }
     end
   end
 
-  xcontext 'when the dependency is defined by a private attr_accessor' do
-    let(:repository_instance) do
-      klass = Class.new do
-        attr_accessor :symbol
-        private :symbol, :symbol=
-      end
-      klass.new
-    end
-
-    before do
-      repository_instance = self.repository_instance
-
-      container.configure do
-        set :symbol do |s|
-          s.instance :strong_symbol
-        end
-
-        set :repository do |s|
-          s.instance repository_instance
-          s.dependency :symbol
-        end
-      end
-    end
-
-    subject { container.get(:repository) }
-
-    it { is_expected.to eq repository_instance }
-
-    describe 'dependency' do
-      subject { super().send(:symbol) }
-
-      it { is_expected.to eq :strong_symbol }
-    end
-  end
-
-  xcontext 'when the service include abstract services' do
+  context 'when a service depends on an abstract services' do
     let(:logger_instance) { 'Logger.new(STDOUT)' }
-    let(:users_repository_class) do
+    let(:service_class) do
       Class.new { attr_accessor :logger }
     end
-
-    before do
-      logger_instance = self.logger_instance
-      users_repository_class = self.users_repository_class
-
-      container.set :logger do |s|
-        s.instance logger_instance
-      end
-
-      container.abstract :repository do |s|
-        s.dependency :logger
-      end
-
-      container.set :users_repository do |s|
-        s.include :repository
-        s.class users_repository_class
-      end
+    let(:logger_specification) do
+      spec = Dumpling::ServiceSpecification.new
+      spec.instance logger_instance
+      spec
+    end
+    let(:adapter_specification) do
+      spec = Dumpling::ServiceSpecification.new
+      spec.dependency :logger
+      spec
+    end
+    let(:service_specification) do
+      spec = Dumpling::ServiceSpecification.new
+      spec.include :adapter
+      spec.class service_class
+      spec
     end
 
-    subject { container[:users_repository] }
+    before do
+      services.set(:logger, logger_specification)
+      abstract_services.set(:adapter, adapter_specification)
+    end
 
-    it { is_expected.to be_an_instance_of users_repository_class }
+    it { is_expected.to be_an_instance_of service_class }
 
-    describe 'injection of a dependency from abstract service' do
+    describe 'injection of a dependency from an abstract service' do
       subject { super().logger }
 
       it { is_expected.to eq logger_instance }
     end
 
-    context 'when the service overrides abstract service dependency' do
-      let(:posts_repository_class) do
+    context 'when a service overrides an abstract service dependency' do
+      let(:service_class) do
         Class.new { attr_accessor :my_logger }
+      end
+      let(:service_specification) do
+        spec = Dumpling::ServiceSpecification.new
+        spec.include :adapter
+        spec.class service_class
+        spec.dependency :logger, attribute: :my_logger
+        spec
+      end
+
+      subject { super().my_logger }
+
+      it { is_expected.to eq logger_instance }
+    end
+
+    context 'when an abstract service in turn depends on another abstract service' do
+      let(:service_class) do
+        Class.new { attr_accessor :logger, :connection }
+      end
+      let(:connection_instance) { 'DB_CONNECTION' }
+      let(:connection_specification) do
+        spec = Dumpling::ServiceSpecification.new
+        spec.instance connection_instance
+        spec
+      end
+      let(:base_adapter_specification) do
+        spec = Dumpling::ServiceSpecification.new
+        spec.dependency :connection
+        spec
+      end
+      let(:adapter_specification) do
+        spec = Dumpling::ServiceSpecification.new
+        spec.include :base_adapter
+        spec.dependency :logger
+        spec
       end
 
       before do
-        posts_repository_class = self.posts_repository_class
-
-        container.set :posts_repository do |s|
-          s.include :repository
-          s.class posts_repository_class
-          s.dependency :logger, attribute: :my_logger
-        end
+        services.set(:connection, connection_specification)
+        abstract_services.set(:base_adapter, base_adapter_specification)
       end
 
-      subject { container[:posts_repository].my_logger }
+      subject { super().connection }
 
-      it { is_expected.to eq logger_instance }
+      it { is_expected.to eq connection_instance }
     end
   end
 end
