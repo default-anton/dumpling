@@ -1,7 +1,7 @@
 module Dumpling
   module Version
     MAJOR = 0
-    MINOR = 2
+    MINOR = 3
     TINY = 0
     PRE = nil
 
