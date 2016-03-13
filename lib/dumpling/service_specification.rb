@@ -1,9 +1,10 @@
 module Dumpling
-  class Specification < BasicObject
-    attr_accessor :dependencies
+  class ServiceSpecification < BasicObject
+    attr_reader :dependencies, :abstract_services
 
     def initialize
-      self.dependencies = []
+      @dependencies = {}
+      @abstract_services = []
     end
 
     def class(klass = nil)
@@ -15,7 +16,13 @@ module Dumpling
     end
 
     def dependency(id, attribute: nil)
-      dependencies << { id: id, attribute: (attribute || guess_attribute(id)).to_sym }
+      dependencies[id] = { attribute: (attribute || guess_attribute(id)).to_sym }
+    end
+
+    def include(*ids)
+      abstract_services.concat ids
+
+      nil
     end
 
     private
