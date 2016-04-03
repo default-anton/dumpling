@@ -4,7 +4,7 @@ script:
   - bundle exec rake spec
 rvm:
   - 2.2
-  - jruby
+  - jruby-9.0.5.0
   - ruby-head
   - rbx
 matrix:
