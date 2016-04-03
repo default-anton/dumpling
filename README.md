@@ -1,9 +1,13 @@
 [gem]: https://rubygems.org/gems/dumpling
+[codeclimate]: https://codeclimate.com/github/antonkuzmenko/dumpling
+[travis]: https://travis-ci.org/antonkuzmenko/dumpling
 [gemnasium]: https://gemnasium.com/antonkuzmenko/dumpling
 
 # Dumpling
 
 [![Gem Version](https://badge.fury.io/rb/dumpling.svg)][gem]
+[![Build Status](https://travis-ci.org/antonkuzmenko/dumpling.svg?branch=master)][travis]
+[![Code Climate](https://codeclimate.com/github/antonkuzmenko/dumpling/badges/gpa.svg)][codeclimate]
 [![Dependency Status](https://gemnasium.com/antonkuzmenko/dumpling.svg)][gemnasium]
 
 Dumpling provides you an unobtrusive way to manage dependencies.
