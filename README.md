@@ -120,6 +120,30 @@ container.configure do
 end
 ```
 
+### Defining abstract services
+
+```ruby
+container = Dumpling::Container.new
+container.configure do
+  abstract :repository do |s|
+    s.dependency :logger
+    s.dependency :persistence_adapter
+  end
+
+  set :users_repository do |s|
+    s.class UsersRepository
+    s.include :repository
+  end
+
+  set :posts_repository do |s|
+    s.class PostsRepository
+    s.include :repository
+    # overriding dependencies
+    s.dependency :postgres_adapter, attribute: :persistence_adapter
+  end
+end
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
