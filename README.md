@@ -1,8 +1,10 @@
 [gem]: https://rubygems.org/gems/dumpling
+[gemnasium]: https://gemnasium.com/antonkuzmenko/dumpling
 
 # Dumpling
 
 [![Gem Version](https://badge.fury.io/rb/dumpling.svg)][gem]
+[![Dependency Status](https://gemnasium.com/antonkuzmenko/dumpling.svg)][gemnasium]
 
 Dumpling provides you an unobtrusive way to manage dependencies.
 What is unobtrusive? Unobtrusive means that you don't need to include a module or inherit a class anywhere in your project.
