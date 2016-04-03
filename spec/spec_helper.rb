@@ -8,4 +8,7 @@ if ENV['COVERAGE'] == 'true'
   end
 end
 
+require 'codeclimate-test-reporter'
+CodeClimate::TestReporter.start
+
 require 'dumpling'
