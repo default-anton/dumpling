@@ -80,15 +80,15 @@ describe Dumpling::ServiceBuilder do
     let(:logger_class) { Class.new }
     let(:adapter_instance) do
       klass = Class.new do
-        private
         attr_accessor :logger
+        private :logger, :logger=
       end
       klass.new
     end
     let(:service_instance) do
       klass = Class.new do
-        private
         attr_accessor :adapter
+        private :adapter, :adapter=
       end
       klass.new
     end

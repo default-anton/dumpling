@@ -13,7 +13,7 @@ module Dumpling
       missing_services.concat(missing_abstract_services)
 
       unless missing_services.empty?
-        fail Errors::Service::MissingDependencies, missing_services.join(', ')
+        raise Errors::Service::MissingDependencies, missing_services.join(', ')
       end
     end
 

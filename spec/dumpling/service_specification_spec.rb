@@ -54,9 +54,9 @@ describe Dumpling::ServiceSpecification do
 
         it 'guesses the name of the attribute by the last word of the id' do
           expect(subject).to eq(
-            'repo.ads': { attribute: :ads },
-            'repo:users': { attribute: :users },
-            'repo legs': { attribute: :legs }
+            :'repo.ads' => { attribute: :ads },
+            :'repo:users' => { attribute: :users },
+            :'repo legs' => { attribute: :legs }
           )
         end
       end

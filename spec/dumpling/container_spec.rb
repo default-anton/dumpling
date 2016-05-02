@@ -71,7 +71,6 @@ describe Dumpling::Container do
     end
     let(:declaration) do
       logger_class = self.logger_class
-      repository_class = self.repository_class
 
       container.set :logger do |s|
         s.class logger_class
@@ -96,8 +95,6 @@ describe Dumpling::Container do
 
     context 'when service is invalid' do
       let(:declaration) do
-        repository_class = self.repository_class
-
         container.abstract :repository do |s|
           s.dependency :logger
         end
@@ -112,8 +109,6 @@ describe Dumpling::Container do
       let(:logger_class) { Class.new }
       let(:repository_class) { Class.new { attr_accessor :logger } }
       let(:declaration) do
-        repository_class = self.repository_class
-
         container.abstract :repository do |s|
           s.dependency :logger
         end

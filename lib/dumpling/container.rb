@@ -11,7 +11,7 @@ module Dumpling
     end
 
     def set(id, &block)
-      fail(Errors::Container::Duplicate, id) if @services.has?(id)
+      raise(Errors::Container::Duplicate, id) if @services.has?(id)
 
       specification = create_specification(&block)
       @services.set(id, specification)
@@ -19,7 +19,7 @@ module Dumpling
     end
 
     def abstract(id, &block)
-      fail(Errors::Container::Duplicate, id) if @abstract_services.has?(id)
+      raise(Errors::Container::Duplicate, id) if @abstract_services.has?(id)
 
       specification = create_abstract_specification(&block)
       @abstract_services.set(id, specification)
@@ -27,7 +27,7 @@ module Dumpling
     end
 
     def get(id)
-      fail(Errors::Container::Missing, id) unless @services.has?(id)
+      raise(Errors::Container::Missing, id) unless @services.has?(id)
 
       specification = @services.get(id)
       build_service(specification)

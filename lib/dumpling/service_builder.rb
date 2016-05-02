@@ -4,7 +4,7 @@ module Dumpling
       @services = services
       @abstract_services = abstract_services
     end
-    
+
     def build(specification)
       instance = service_instance(specification)
       dependencies = service_dependencies(specification)
@@ -14,7 +14,7 @@ module Dumpling
       end
       instance
     end
-    
+
     private
 
     def service_instance(specification)
