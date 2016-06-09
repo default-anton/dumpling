@@ -155,4 +155,47 @@ describe Dumpling::Container do
       it { is_expected.to raise_error Dumpling::Errors::Container::Missing }
     end
   end
+
+  describe '#inspect' do
+    subject { container.inspect }
+
+    context 'when container is empty' do
+      it { is_expected.to eq container.to_s }
+    end
+
+    context 'when container has multiple services' do
+      let(:repository_class) do
+        Class.new do
+          def self.inspect
+            'MegaClass'
+          end
+        end
+      end
+      let(:expected_string) do
+        <<-INSPECT.strip
+#{container.to_s}
+apple
+ --> instance: "apple"
+ --> dependencies: repository
+repository
+ --> class: MegaClass
+        INSPECT
+      end
+
+      before do
+        repository_class = self.repository_class
+
+        container.set :repository do |s|
+          s.class repository_class
+        end
+
+        container.set :apple do |s|
+          s.instance 'apple'
+          s.dependency :repository
+        end
+      end
+
+      it { is_expected.to eq expected_string }
+    end
+  end
 end

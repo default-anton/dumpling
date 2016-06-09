@@ -35,6 +35,19 @@ module Dumpling
 
     alias :[] get
 
+    def inspect
+      services = @services.keys.sort.map do |id|
+        service = @services.get(id)
+        string = id.to_s
+        service_object = (service.instance.nil? ? service.class.inspect : service.instance.inspect)
+        string << "\n --> #{service.instance.nil? ? 'class' : 'instance'}: #{service_object}"
+        dependencies = service.dependencies.keys.join(',')
+        string << "\n --> dependencies: #{dependencies}" unless dependencies.empty?
+        string
+      end
+      services.empty? ? to_s : "#{self}\n#{services.join("\n").strip}"
+    end
+
     private
 
     def create_specification
