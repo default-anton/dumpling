@@ -133,27 +133,35 @@ end
 ```
 
 ### Defining abstract services
+Abstract service cannot be instantiated (accessed outside of the container). Whenever you include an abstract service into a regular service, you will inherit its dependencies.
 
 ```ruby
 container = Dumpling::Container.new
 container.configure do
   abstract :repository do |s|
-    s.dependency :logger
-    s.dependency :persistence_adapter
+    s.dependency :logger # => #<Logger:0x00000000e281a0>
+    s.dependency :persistence_adapter # => #<Sequel:0x00000000e281a0>
   end
 
   set :users_repository do |s|
     s.class UsersRepository
     s.include :repository
   end
+end
 
+container[:users_repository].logger # => #<Logger:0x00000000e281a0>
+container[:users_repository].persistence_adapter # => #<Sequel:0x00000000e281a0>
+
+container.configure do
   set :posts_repository do |s|
     s.class PostsRepository
     s.include :repository
     # overriding dependencies
-    s.dependency :postgres_adapter, attribute: :persistence_adapter
+    s.dependency :postgres_adapter, attribute: :persistence_adapter # => #<PG:0x00000000e281a0>
   end
 end
+
+container[:users_repository].persistence_adapter # => #<PG:0x00000000e281a0>
 ```
 
 ## Development
