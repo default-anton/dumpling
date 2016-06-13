@@ -156,6 +156,36 @@ describe Dumpling::Container do
     end
   end
 
+  describe '#configure' do
+    describe 'return value' do
+      subject { container.configure {} }
+
+      it { is_expected.to eq container }
+    end
+
+    describe 'configuration' do
+      let(:configuration) do
+        container.configure do
+          set :game do |s|
+            s.instance 'Tetris'
+          end
+
+          abstract :gaming_console do |s|
+            s.dependency :game, attribute: :tetris
+          end
+        end
+      end
+
+      subject { -> { configuration } }
+
+      it { is_expected.not_to raise_error }
+
+      it 'defines a service' do
+        expect(configuration.get(:game)).to eq 'Tetris'
+      end
+    end
+  end
+
   describe '#initialize_dup' do
     subject { container.dup }
 

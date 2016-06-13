@@ -5,11 +5,6 @@ module Dumpling
       @abstract_services = Registry.new
     end
 
-    def configure(&block)
-      instance_eval(&block)
-      self
-    end
-
     def set(id, &block)
       raise(Errors::Container::Duplicate, id) if @services.has?(id)
 
@@ -34,6 +29,11 @@ module Dumpling
     end
 
     alias :[] get
+
+    def configure(&block)
+      instance_eval(&block)
+      self
+    end
 
     def initialize_dup(original)
       @services = original.services.dup
