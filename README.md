@@ -164,61 +164,6 @@ end
 container[:users_repository].persistence_adapter # => #<PG:0x00000000e281a0>
 ```
 
-## TODO (not implemented)
-
-### Tags
-
-```ruby
-container = Dumpling::Container.new
-container.configure do
-  abstract :pg_repository do |s|
-    s.tags << :pg << :repository
-  end
-
-  set :users_repository do |s|
-    s.include :pg_repository
-    s.class PG::Users
-  end
-
-  abstract :sqlite_repository do |s|
-    s.tags << :sqlite << :repository
-  end
-
-  set :users_repository do |s|
-    s.include :sqlite_repository
-    s.class Sqlite::Users
-  end
-end
-
-container[:users_repository] # => FAIL! Ambiguous service
-container.use(:pg)
-container[:users_repository] # => #<PG::Users:0x000..>
-container.use(:sqlite)
-container[:users_repository] # => #<Sqlite::Users:0x000..>
-```
-
-Real life example
-
-```ruby
-Rails.application.container = Dumpling::Container.new
-
-class ApplicationController
-  def container
-    Rails.application.container
-  end
-end
-
-class UsersController < ApplicationController
-  def index
-    @users = container[:users_repository].all
-  end
-end
-
-describe UsersController, type: :controller do
-  around { |e| Rails.application.container.use(:sqlite, &e) }
-end
-```
-
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
