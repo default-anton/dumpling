@@ -173,7 +173,7 @@ describe Dumpling::Container do
       end
       let(:expected_string) do
         <<-INSPECT.strip
-#{container.to_s}
+#{container}
 apple
  --> instance: "apple"
  --> dependencies: repository
