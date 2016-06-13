@@ -42,13 +42,7 @@ module Dumpling
     end
 
     def inspect
-      services = @services.keys.sort.map do |id|
-        service = @services.get(id)
-        string = id.to_s
-        string << service_object_str(service.instance, service.class).to_s
-        string << dependencies_str(service.dependencies).to_s
-        string
-      end
+      services = @services.keys.sort.map { |id| inspect_service(id) }
       services.empty? ? to_s : "#{self}\n#{services.join("\n").strip}"
     end
 
@@ -85,12 +79,19 @@ module Dumpling
       ServiceBuilder.new(@services, @abstract_services).build(specification)
     end
 
-    def service_object_str(service_instance, service_class)
+    def inspect_service(id)
+      service = @services.get(id)
+      string = id.to_s
+      string << inspect_service_object(service.instance, service.class).to_s
+      string << inspect_service_dependencies(service.dependencies).to_s
+    end
+
+    def inspect_service_object(service_instance, service_class)
       service_object = (service_instance.nil? ? service_class.inspect : service_instance.inspect)
       "\n --> #{service_instance.nil? ? 'class' : 'instance'}: #{service_object}"
     end
 
-    def dependencies_str(dependencies)
+    def inspect_service_dependencies(dependencies)
       dependencies = dependencies.keys.join(',')
       "\n --> dependencies: #{dependencies}" unless dependencies.empty?
     end
