@@ -36,6 +36,10 @@ Or install it yourself as:
 
 ### Basics
 
+Use ```instance``` for long-lived objects. ```#get``` returns the same instance at each call
+
+Use ```class``` for short-lived objects. ```#get``` returns a new instance on every call
+
 ```ruby
 class UsersRepository
   attr_writer :logger
@@ -52,11 +56,11 @@ Dumpling.configure do
   end
 end
 
-# Every time you invoke the #get method you will get a new instance of the #class
+# Every time you invoke the #get method you get a new instance of the #class
 Dumpling.get(:users_repository) # => #<UsersRepository:0x00000000ebee20>
 Dumpling.get(:users_repository) # => #<UsersRepository:0x00000000e8a8f0>
 
-# Every time you invoke the #get method you will get the same predefined #instance
+# Every time you invoke the #get method you get the same predefined #instance
 Dumpling.get(:logger) # => #<Logger:0x00000000e281a0>
 Dumpling.get(:logger) # => #<Logger:0x00000000e281a0>
 ```
@@ -133,7 +137,7 @@ end
 ```
 
 ### Defining abstract services
-Abstract service cannot be instantiated (accessed outside of the container). Whenever you include an abstract service into a regular service, you will inherit its dependencies.
+Abstract service cannot be instantiated (accessed outside of the container). Whenever you include an abstract service into a regular service, you inherit its dependencies.
 
 ```ruby
 container = Dumpling::Container.new
@@ -162,6 +166,27 @@ container.configure do
 end
 
 container[:users_repository].persistence_adapter # => #<PG:0x00000000e281a0>
+```
+
+### Duplicating a container
+
+```ruby
+original = Dumpling::Container.new
+original.configure do
+  set :logger do |s|
+    s.instance Logger.new(STDOUT)
+  end
+end
+
+duplicate = original.dup
+duplicate.get(:logger).equal?(original.get(:logger)) # => true
+
+# Changes in the original container do not affect the duplicate and vise versa
+original.set :game do |s|
+  s.instance 'Tetris'
+end
+
+duplicate.get(:game) # => BOOM! raise Dumpling::Errors::Container::Missing
 ```
 
 ## Development
