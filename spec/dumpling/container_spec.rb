@@ -156,6 +156,61 @@ describe Dumpling::Container do
     end
   end
 
+  describe '#initialize_dup' do
+    subject { container.dup }
+
+    context 'when container is empty' do
+      it { is_expected.not_to eq container }
+    end
+
+    context 'when container is not empty' do
+      before do
+        container.set(:left_arm) { |s| s.instance 'Left' }
+        container.set(:right_arm) { |s| s.instance 'Right' }
+        container.abstract :arms do |s|
+          s.dependency :left_arm
+          s.dependency :right_arm
+        end
+        container.set(:human) do |s|
+          s.instance Class.new { attr_accessor :left_arm, :right_arm }.new
+          s.include :arms
+        end
+      end
+
+      subject { container.dup.get(:human) }
+
+      it 'duplicates all services' do
+        expect(subject).to equal container.get(:human)
+        expect(subject.left_arm).to equal container.get(:human).left_arm
+        expect(subject.right_arm).to equal container.get(:human).right_arm
+      end
+    end
+
+    context 'when adding new services to the original container' do
+      let!(:duplicate) { container.dup }
+
+      subject { -> { duplicate.get(:logger) } }
+
+      before do
+        container.set(:logger) { |s| s.instance 'MyLogger' }
+      end
+
+      it { is_expected.to raise_error Dumpling::Errors::Container::Missing }
+    end
+
+    context 'when adding new services to the duplicated container' do
+      let(:duplicate) { container.dup }
+
+      subject { -> { container.get(:logger) } }
+
+      before do
+        duplicate.set(:logger) { |s| s.instance 'MyLogger' }
+      end
+
+      it { is_expected.to raise_error Dumpling::Errors::Container::Missing }
+    end
+  end
+
   describe '#inspect' do
     subject { container.inspect }
 

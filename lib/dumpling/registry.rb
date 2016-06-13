@@ -21,5 +21,15 @@ module Dumpling
     def has?(id)
       @keys.include?(id)
     end
+
+    def initialize_dup(original)
+      @data = original.data.dup
+      @keys = original.keys.dup
+      super
+    end
+
+    protected
+
+    attr_reader :data
   end
 end

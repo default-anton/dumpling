@@ -35,6 +35,12 @@ module Dumpling
 
     alias :[] get
 
+    def initialize_dup(original)
+      @services = original.services.dup
+      @abstract_services = original.abstract_services.dup
+      super
+    end
+
     def inspect
       services = @services.keys.sort.map do |id|
         service = @services.get(id)
@@ -45,6 +51,10 @@ module Dumpling
       end
       services.empty? ? to_s : "#{self}\n#{services.join("\n").strip}"
     end
+
+    protected
+
+    attr_reader :services, :abstract_services
 
     private
 
