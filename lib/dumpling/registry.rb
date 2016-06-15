@@ -8,10 +8,8 @@ module Dumpling
     end
 
     def set(id, value)
-      @data[id] = value
       @keys << id
-
-      value
+      @data[id] = value
     end
 
     def get(id)

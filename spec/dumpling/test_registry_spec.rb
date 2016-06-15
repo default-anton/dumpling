@@ -1,5 +1,5 @@
 require 'spec_helper'
 
-describe Dumpling::Registry do
+describe Dumpling::TestRegistry do
   include_examples 'registry'
 end

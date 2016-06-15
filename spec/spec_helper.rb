@@ -12,3 +12,4 @@ require 'codeclimate-test-reporter'
 CodeClimate::TestReporter.start
 
 require 'dumpling'
+Dir['./spec/support/**/*.rb'].sort.each { |f| require f }

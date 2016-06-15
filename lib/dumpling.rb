@@ -11,6 +11,8 @@ module Dumpling
   require 'dumpling/dependencies_validator'
   require 'dumpling/registry'
   require 'dumpling/container'
+  require 'dumpling/test_registry'
+  require 'dumpling/test_container'
 
   @container = Container.new
 
