@@ -189,6 +189,51 @@ end
 duplicate.get(:game) # => BOOM! raise Dumpling::Errors::Container::Missing
 ```
 
+### Using Dumpling in tests
+
+In order to mock services you can incorporate `Dumpling::TestContainer` in your test environment.
+It has two additional methods, namely `#mock` and `#clear_mocks`
+
+For instance, you have configured the following services:
+
+```ruby
+container = app_env == :test ? Dumpling::TestContainer.new : Dumpling::Container.new
+container.configure do
+  set :logger do |s|
+    s.instance Logger.new(STDOUT)
+  end
+
+  set :worker do |s|
+    s.instance Worker.new
+    s.dependency :logger
+  end
+end
+```
+
+Add the following snippet into `spec_helper.rb`
+
+```ruby
+config.before :example do
+  container.clear_mocks
+end
+```
+
+An example of how to use `#mock`
+
+```ruby
+describe Worker do
+  let(:test_logger) { double(:test_logger) }
+
+  subject { container[:worker].logger }
+  
+  before do
+    container.mock(:logger, test_logger)
+  end
+
+  it { is_expected.to eq test_logger }
+end
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
