@@ -184,6 +184,40 @@ shared_examples 'container' do
     end
   end
 
+  describe '#each' do
+    context 'when container is empty' do
+      it 'does not yield' do
+        expect { |b| container.each(&b) }.not_to yield_control
+      end
+    end
+
+    context 'when container contains services' do
+      let!(:configuration) do
+        container.configure do
+          set(:game) { |s| s.instance 'Tetris' }
+          set(:string) { |s| s.instance 'MegaStr' }
+        end
+      end
+
+      it 'yields all services' do
+        expect { |b| container.each(&b) }.to yield_successive_args 'Tetris', 'MegaStr'
+      end
+    end
+
+    context 'when container contains abstract services' do
+      let!(:configuration) do
+        container.configure do
+          set(:game) { |s| s.instance 'Tetris' }
+          abstract(:repository) { |s| s.dependency :game }
+        end
+      end
+
+      it 'does not yield abstract services' do
+        expect { |b| container.each(&b) }.to yield_successive_args 'Tetris'
+      end
+    end
+  end
+
   describe '#initialize_dup' do
     subject { container.dup }
 

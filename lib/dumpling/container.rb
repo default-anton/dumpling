@@ -1,5 +1,7 @@
 module Dumpling
   class Container
+    include Enumerable
+
     def initialize
       @services = Registry.new
       @abstract_services = Registry.new
@@ -33,6 +35,14 @@ module Dumpling
     def configure(&block)
       instance_eval(&block)
       self
+    end
+
+    def each
+      if block_given?
+        @services.keys.each { |id| yield get(id) }
+      else
+        to_enum
+      end
     end
 
     def initialize_dup(original)
